@@ -6,7 +6,7 @@ void shut_record(int filedesc);
 /**
  *make_buf - allocates bytes for a buffer
  *@record: name of file
- *@Return: pointer
+ *Return: pointer
  */
 char *make_buf(char *record)
 {
@@ -15,7 +15,7 @@ char *make_buf(char *record)
 	workspace = malloc(sizeof(char) * 1024);
 	if (workspace == NULL)
 	{
-		dprintf(STDERR_FILENO, "Error: Can't write to %s\n",record);
+		dprintf(STDERR_FILENO, "Error: Can't write to %s\n", record);
 		exit(99);
 	}
 	return (workspace);
@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
 		}
 		a = read(incoming, reserve, 1024);
 		outgoing = open(argv[2], O_WRONLY | O_APPEND);
-	}while (a > 0);
+	} while (a > 0);
 	free(reserve);
 	shut_record(incoming);
 	shut_record(outgoing);
