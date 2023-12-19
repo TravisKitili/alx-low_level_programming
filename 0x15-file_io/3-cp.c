@@ -1,25 +1,38 @@
 #include "main.h"
 #include <stdio.h>
+#include <stdlib.h>
+char *make_buf(char *record);
+void shut_record(int filedesc);
 /**
- *check_doc - checks if files can be opened
- *@source: file
- *@destination: file
- *@argv: argument vector
- *Return: ---
+ *make_buf - allocates bytes for a buffer
+ *@record: name of file
+ *@Return: pointer
  */
-void check_doc(int source, int destination, char *argv[])
+char *make_buf(char *record)
 {
-	if (source == -1)
+	char *workspace;
+
+	workspace = malloc(sizeof(char) * 1024);
+	if (workspace == NULL)
 	{
-		dprintf(STDERR_FILENO, "Error: Can't read from file %s\n",
-				argv[1]);
-		exit(98);
-	}
-	if (destination == -1)
-	{
-		dprintf(STDERR_FILENO, "Error: Can't read from file %s\n",
-				argv[2]);
+		dprintf(STDERR_FILENO, "Error: Can't write to %s\n",record);
 		exit(99);
+	}
+	return (workspace);
+}
+/**
+ *shut_record - closes file descriptors
+ *@filedesc: file descriptor
+ */
+void shut_record(int filedesc)
+{
+	int o;
+
+	o = close(filedesc);
+	if (o == -1)
+	{
+		dprintf(STDERR_FILENO, "Error: Can't close fd %d\n", filedesc);
+		exit(100);
 	}
 }
 /**
@@ -30,40 +43,40 @@ void check_doc(int source, int destination, char *argv[])
  */
 int main(int argc, char *argv[])
 {
-	int source, destination, seal_error;
-	ssize_t i, j;
-	char buffer[1024];
+	int incoming, outgoing, a, b;
+	char *reserve;
 
 	if (argc != 3)
 	{
-		dprintf(STDERR_FILENO, "%s\n", "Usage: cp file_from file_to");
+		dprintf(STDERR_FILENO, "Usage: cp file_from file_to\n");
 		exit(97);
 	}
-	source = open(argv[1], O_RDONLY);
-	destination = open(argv[2], O_CREAT | O_WRONLY | O_TRUNC | O_APPEND,
-			0664);
-	check_doc(source, destination, argv);
-	i = 1024;
-	while (i == 1024)
-	{
-		i = read(source, buffer, 1024);
-		if (i == -1)
-			check_doc(-1, 0, argv);
-		j = write(destination, buffer, i);
-		if (j == -1)
-			check_doc(0, -1, argv);
-	}
-	seal_error = close(source);
-	if (seal_error == -1)
-	{
-		dprintf(STDERR_FILENO, "Error: Can't close fd %d\n", source);
-		exit(100);
-	}
-	seal_error = close(destination);
-	if (seal_error == -1)
-	{
-		dprintf(STDERR_FILENO, "Error: Can't close fd %d\n", source);
-		exit(100);
-	}
+	reserve = make_buf(argv[2]);
+	incoming = open(argv[1], O_RDONLY);
+	a = read(incoming, reserve, 1024);
+	outgoing = open(argv[2], O_CREAT | O_WRONLY | O_TRUNC, 0664);
+	do {
+		if (incoming == -1 || a == -1)
+		{
+			dprintf(STDERR_FILENO,
+					"Error: Can't read from file %s\n",
+					argv[1]);
+			free(reserve);
+			exit(98);
+		}
+		b = write(outgoing, reserve, a);
+		if (outgoing == -1 || b == -1)
+		{
+			dprintf(STDERR_FILENO, "Error: Can't write to %s\n",
+					argv[2]);
+			free(reserve);
+			exit(99);
+		}
+		a = read(incoming, reserve, 1024);
+		outgoing = open(argv[2], O_WRONLY | O_APPEND);
+	}while (a > 0);
+	free(reserve);
+	shut_record(incoming);
+	shut_record(outgoing);
 	return (0);
 }
