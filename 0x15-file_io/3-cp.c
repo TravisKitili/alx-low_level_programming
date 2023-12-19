@@ -23,10 +23,10 @@ void check_doc(int source, int destination, char *argv[])
 	}
 }
 /**
- *main: entry point
+ *main - entry point
  *@argc: argument count
  *@argv: argument vector
- *return: 0 success
+ *Return: 0 success
  */
 int main(int argc, char *argv[])
 {
